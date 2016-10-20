@@ -1,0 +1,49 @@
+#!/usr/bin/python2.7
+
+from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+import time
+import requests
+import logging
+from daemonize import Daemonize
+import signal
+import sys
+
+pid = "/var/run/dyndns.pid"
+
+bindip = "0.0.0.0"
+port = 41419
+ipmap = {'192.168.3.1':'rauros.net', '192.168.6.1':'clamps.rauros.net'}
+
+def signal_term_handler(signal, frame):
+    sys.exit(0)
+
+signal.signal(signal.SIGTERM, signal_term_handler)
+
+class server(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/plain")
+        self.end_headers()
+
+        host = ipmap.get(self.client_address[0])
+        if host:
+            r = requests.put("https://mailbox.rauros.net/admin/dns/custom/%s" % (host), data=self.path.strip("/"), auth=('###USERNAME###', '###PASSWORD###'))
+            self.wfile.write(r.text)
+            logging.info("%s - Processed record update: %s - %s" % (time.asctime(),host,self.path.strip("/")))
+        else:
+            logging.info("%s - Unauthorized access from %s accessing %s" % (time.asctime(),self.client_address[0],self.path))
+            self.wfile.write("Unauthorized")
+
+def main():
+    logging.basicConfig(filename='/var/log/dyndns.log',level=logging.INFO)
+    listener = HTTPServer((bindip, port), server)
+    logging.info("%s - HTTP request handler started - %s:%s" % (time.asctime(), bindip, port))
+
+    try:
+        listener.serve_forever()
+    finally:
+        listener.server_close()
+        logging.info("%s - HTTP request handler stopped - %s:%s" % (time.asctime(), bindip, port))
+
+daemon = Daemonize(app="dyndns", pid=pid, action=main)
+daemon.start()
