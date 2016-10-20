@@ -1,7 +1,7 @@
 #!/bin/bash
-if [ -e /home/calculon/.audible ]
+if [ -e ~/.audible ]
 then
-    AUTHCODE=`cat /home/calculon/.audible`
+    AUTHCODE=`cat ~/.audible`
 else
     # Use env var
     AUTHCODE=${AUTHCODE}
