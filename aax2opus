@@ -6,9 +6,9 @@ else
     # Use env var
     AUTHCODE=${AUTHCODE}
 fi
-t="$(date +%s)"
 TMPARGS="/tmp/.aax2opus.executions"
 while [ $# -gt 0 ]; do
+    t="$(date +%s)"
     FILE=$1
     TMPFILE="/tmp/.aax2opus.tmp.txt"
     echo "Decoding $FILE with AUTHCODE $AUTHCODE..."
